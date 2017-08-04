@@ -1,8 +1,24 @@
-$def with(name)
-
-$code:
-    if name==None:
-        name = "willike"
-
-
-<h1>hello $name</h1>
+$def with (name)
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="static/css/normalize.min.css">
+    <link rel="stylesheet" href="static/css/index.css">
+    <title>ITAKEN WEB.PY DEMO 首页</title>
+</head>
+<body>
+    <div class="container">
+        <div class="main">
+            <h1>Hello, <label>Web.py</label></h1>
+            <div class="main-user">
+                <span>Welcome,&nbsp;<label>$name</label></span>
+                <a href="/login">重新登录</a>
+            </div>
+        </div>
+        <div class="footer">
+            <a href="https://github.com/itaken" target="_blank" rel="noopener noreferrer">@itaken</a>
+        </div>
+    </div>
+</body>
+</html>

@@ -4,6 +4,7 @@ import web
 import config.db as dbconfig
 from common.itaken import Itaken
 
+# 连接数据库
 db = web.database(dbn="mysql", db=dbconfig.MYSQL_DBNAME,
                   user=dbconfig.MYSQL_USERNAME, pw=dbconfig.MYSQL_PASSWORD)
 
@@ -23,12 +24,18 @@ class Member:
             return {"code": 0, "message": "密码为空"}
 
         # 判断用户是否存在
-        if cls.is_user_exist(name=name) != False:
+        is_exist = cls.is_user_exist(name=name)
+        if is_exist < 1:
             return {"code": 0, "message": "该用户名已存在"}
 
-        enname = Itaken.hash(name)  # 昵称hash
+        enname = Itaken.enmd5(name)  # 昵称hash
         psw = Itaken.enpsw(psw)  # 密码加密
-        uid = db.insert("members", name=name, enname=enname, password=psw)
+        # 注册时间
+        from datetime import datetime
+        add_time = datetime.now().isoformat(" ")
+        # add_time = SQLLiteral('NOW()')
+        uid = db.insert("ita_members", name=name, enname=enname, password=psw, add_time=add_time)
+
         if uid:
             return {"code": 1, "message": "注册成功", "uid": uid}
 
@@ -36,33 +43,33 @@ class Member:
 
     # 是否用户存在
     @classmethod
-    def is_user_exist(cls, name=""):
+    def is_user_exist(cls, name):
         if name is None or name == "":
             return False
 
-        user = cls.get_user_info_by_name(name=name, field="uid")
+        enname = Itaken.enmd5(name)  # 昵称hash
+        user = cls.__get_user_info(where=dict(enname=enname), field="uid")
 
-        if user.get("code") != 1:
-            return False
+        if user:
+            uid = user.get("uid")
+            return int(uid)
 
-        uid = user.get("uid")
-        return int(uid)
+        return 0
 
-    # 用户登录
+# 用户登录
     @classmethod
-    def login(cls, name="", psw=""):
+    def login(cls, name, psw):
         if name is None or name == "":
             return {"code": 0, "message": "用户名为空"}
 
         if psw is None or psw == "":
             return {"code": 0, "message": "密码为空"}
 
-        user = cls.get_user_info_by_name(name=name)
-        if user.get("code") != 1:
-            return user
-
+        enname = Itaken.enmd5(name)  # 昵称hash
         psw = Itaken.enpsw(psw)  # 密码加密
-        if user.get("password") != psw:
+        user = cls.__get_user_info(where=dict(enname=enname, password=psw))
+
+        if user is None:
             return {"code": 0, "message": "账号或密码错误"}
 
         return {
@@ -71,22 +78,61 @@ class Member:
             "name": user.get("name"),
         }
 
+    # 获取用户信息
+    @classmethod
+    def __get_user_info(cls, where=None, field=None):
+        if field is None or field == "":
+            field = "*"
+
+        if where is None or where == "":
+            result = db.select("ita_members", what=field)
+        else:
+            result = db.select("ita_members", where=where, what=field)
+
+        if not result:  # 结果不存在
+            return None
+
+        user = dict(result[0])
+
+        if user.get("password"):
+            user.pop("password")  # 删除密码项
+
+        if user.get("add_time"):
+            # 处理 注册时间
+            add_time = user["add_time"]
+            user["add_time"] = add_time.isoformat(" ")
+
+        return user
+
     # 通过昵称获取用户信息
     @classmethod
     def get_user_info_by_name(cls, name, field=None):
         if name is None or name == "":
             return {"code": 0, "message": "用户名为空"}
 
-        enname = Itaken.hash(name)  # 昵称hash
-        sql_data = dict(enname=enname)
-        if field is None or field == "" or field == "*":
-            result = db.select("members", where=sql_data)
-        else:
-            result = db.select("members", where=sql_data, what=field)
+        enname = Itaken.enmd5(name)  # 昵称hash
+        user = cls.__get_user_info(where=dict(enname=enname), field=field)
 
-        if result:
-            user = dict(result[0])
-            user["code"] = 1
-            return user
-        
-        return {"code": 0, "message": "没有该用户信息"}
+        if user is None:
+            return {"code": 0, "message": "没有该用户信息"}
+
+        user["code"] = 1
+        return user
+
+    # 通过 uid 获取用户信息
+    @classmethod
+    def get_user_info_by_uid(cls, uid, field=None):
+        if uid is None or uid == "":
+            return {"code": 0, "message": "用户ID为空"}
+
+        uid = int(uid)
+        if uid < 1:  # 判断是否是int
+            return {"code": 0, "message": "用户ID不合法"}
+
+        user = cls.__get_user_info(where=dict(uid=uid), field=field)
+
+        if user is None:
+            return {"code": 0, "message": "没有该用户信息"}
+
+        user["code"] = 1
+        return user

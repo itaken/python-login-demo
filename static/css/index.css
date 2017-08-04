@@ -1,0 +1,59 @@
+/* 主页样式 */
+.container{
+}
+.container .main{
+    text-align: center;
+    margin: 80px auto;
+}
+.container .main h1{
+    color: #00008b;
+    user-select: none;
+    border-bottom: 1px solid #4b7598;
+    padding: 0 0 15px 0;
+    cursor: default;
+}
+.container .main h1 label{
+    padding: 2px 4px;
+    border-radius: 5px;
+    background: #f7f6f4;
+    color: #d2691e;
+}
+.container .main h1 label:hover{
+    background: #d2691e;
+    color: #f7f6f4;
+}
+.container .main .main-user{
+    margin: 0 auto;
+    padding: 10px 20px;
+    color: #e6b26e;
+    cursor: default;
+}
+.container .main .main-user span{
+    font-size: 1.6em;
+}
+.container .main .main-user a{
+    color: #fdfdff;
+    background: #a52a2a;
+    text-decoration: none;
+    cursor: pointer;
+    padding: 3px 5px;
+    border-radius: 5px;
+    display: block;
+    width: 68px;
+    margin: 30px auto 0 auto;
+}
+.container .main .main-user a:hover{
+    color: #a52a2a;
+    background: #fbd2b5;
+}
+.footer{
+    margin: 10px;
+    right: 10px;
+    bottom: 10px;
+    position: absolute;
+}
+.footer a{
+    color: #deb887;
+    cursor: pointer;
+    text-decoration: none;
+}
