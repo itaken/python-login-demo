@@ -2,4 +2,4 @@
 MYSQL_DBNAME = "python-demo"
 
 MYSQL_USERNAME = "root"
-MYSQL_PASSWORD = "root"
+MYSQL_PASSWORD = "regel@123"
