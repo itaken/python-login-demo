@@ -46,3 +46,24 @@ class Itaken:
             return None
         import uuid
         return uuid.uuid4().hex[:strlen].upper()
+
+    # 生成 当前时间
+    @classmethod
+    def nowtime(cls):
+        from datetime import datetime
+        now_time = datetime.now().isoformat(" ")
+        return now_time
+
+    # list数据不重复
+    @classmethod
+    def spread_list(cls, i, l=[], step=1, minimum=0):
+        if minimum < 0:
+            minimum = 0
+        i = i < minimum and minimum or i
+        step = step < 1 and 1 or step  # < 1 则为 1
+
+        if i in l:
+            return cls.spread_list(i+step, l, step, minimum)
+
+        l.append(i)
+        return l

@@ -3,6 +3,7 @@
 import web
 import config.db as dbconfig
 from common.itaken import Itaken
+from common.connector import Connector
 
 # 连接数据库
 db = web.database(dbn="mysql", db=dbconfig.MYSQL_DBNAME,
@@ -30,13 +31,12 @@ class Member:
 
         enname = Itaken.enmd5(name)  # 昵称hash
         psw = Itaken.enpsw(psw)  # 密码加密
-        # 注册时间
-        from datetime import datetime
-        add_time = datetime.now().isoformat(" ")
-        # add_time = SQLLiteral('NOW()')
+        add_time = Itaken.nowtime()  # 注册时间
+
         uid = db.insert("ita_members", name=name, enname=enname, password=psw, add_time=add_time)
 
         if uid:
+            Connector.generate(uid=uid)  # 生成授权token
             return {"code": 1, "message": "注册成功", "uid": uid}
 
         return {"code": 0, "message": "注册失败"}
@@ -56,7 +56,7 @@ class Member:
 
         return 0
 
-# 用户登录
+    # 用户登录
     @classmethod
     def login(cls, name, psw):
         if name is None or name == "":
@@ -72,10 +72,23 @@ class Member:
         if user is None:
             return {"code": 0, "message": "账号或密码错误"}
 
+        uid = user.get("uid")
+        token_info = Connector.get_user_token_info(uid=uid)
+        if not token_info:  # 防止因为没有生成token导致的错误
+            token_info = Connector.generate(uid=uid)
+            session_token = token_info.get("session_token")
+        else:
+            update_res = Connector.update_session_token(uid=uid)  # 更新 登录token
+            session_token = update_res.get("session_token")
+
+        access_token = token_info.get("access_token")
+        token_encrypt = Connector.encrypt_token(uid=uid, access_token=access_token, session_token=session_token)
+
         return {
             "code": 1,
-            "uid": user.get("uid"),
+            "uid": uid,
             "name": user.get("name"),
+            "token": token_encrypt.get("token"),
         }
 
     # 获取用户信息
@@ -136,3 +149,9 @@ class Member:
 
         user["code"] = 1
         return user
+
+    # 修改用户密码
+    @classmethod
+    def reset_psw(cls, uid, new_psw):
+        # TODO::...
+        Connector.update_access_token(uid=uid)  # 更新授权信息
